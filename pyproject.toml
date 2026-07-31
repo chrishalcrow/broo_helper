@@ -10,3 +10,7 @@ dependencies = [
 
 [tool.uv.sources]
 aeon-mecha = { path = "../aeon_mecha" }
+
+[build-system]
+requires = ["setuptools>=78.0.2"]
+build-backend = "setuptools.build_meta"
