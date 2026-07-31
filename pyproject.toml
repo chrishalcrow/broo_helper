@@ -1,0 +1,12 @@
+[project]
+name = "broo-helper"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aeon-mecha",
+]
+
+[tool.uv.sources]
+aeon-mecha = { path = "../aeon_mecha" }
