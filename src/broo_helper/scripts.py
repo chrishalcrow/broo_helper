@@ -17,7 +17,7 @@ def format_hours(total_hours):
             remaining_hours = 0
             days += 1
             
-    return f"{days}d-{remaining_hours:02d}:{minutes:02d}"
+    return f"{days}-{remaining_hours:02d}:{minutes:02d}"
 
 def make_and_run_python_script(job_name, script_path, cores=1, mem=8, gpu=False, hours=1, email="c.halcrow@ucl.ac.uk", run=True):
 
