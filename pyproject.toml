@@ -4,12 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "aeon-mecha",
-]
-
-[tool.uv.sources]
-aeon-mecha = { path = "../aeon_mecha" }
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=78.0.2"]
