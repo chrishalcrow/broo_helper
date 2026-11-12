@@ -29,7 +29,10 @@ def make_and_run_python_script(
     hours=1,
     email="c.halcrow@ucl.ac.uk",
     run=True,
+    aeon=False,
 ):
+
+    print(f"inside make_and_run_python_script. {gpu=} and {gpu_queue=}.")
 
     current_datetime = datetime.now(timezone.utc)
     datetime_string = f"{current_datetime:%Y%m%dT%H%M%SZ}"
@@ -39,7 +42,14 @@ def make_and_run_python_script(
     else:
         gpu_string=""
 
+    if aeon:
+        aeon_string="#SBATCH --account=aeon_prep_ac\n"
+    else:
+        aeon_string=""
+
     cpu_or_gpu = "gpu" if (gpu_queue or gpu) else "cpu"
+
+    print(f"and {cpu_or_gpu=}")
 
     time_string = format_hours(hours)
 
@@ -51,15 +61,17 @@ def make_and_run_python_script(
 #SBATCH -J {job_name}
 #SBATCH -p {cpu_or_gpu}
 {gpu_string}#SBATCH -N 1
-#SBATCH --mem {mem}G
+{aeon_string}#SBATCH --mem {mem}G
 #SBATCH --mail-user {email}
 #SBATCH --mail-type END,FAIL
+
 #SBATCH -n {cores}
 #SBATCH -t {time_string}
-#SBATCH -o logs/{job_name}_{datetime_string}.out
-#SBATCH -e logs/{job_name}_{datetime_string}.err \n
+#SBATCH -o logs/{job_name}_%j.out
+#SBATCH -e logs/{job_name}_%j.err \n
 module load uv
 
+source ~/.bashrc
 ulimit -n 4096
 
 cd {current_dir!s}
@@ -74,3 +86,73 @@ uv run {script_path}"""
     if run:
         command_to_run = ["sbatch", script_filename]
         subprocess.run(command_to_run, check=True)
+
+
+def make_and_run_python_scripts(
+    job_name,
+    script_path,
+    array_range,
+    cores=1,
+    mem=8,
+    gpu=False,
+    gpu_queue=False,
+    hours=1,
+    email="c.halcrow@ucl.ac.uk",
+    run=True,
+    aeon=False,
+):
+
+    current_datetime = datetime.now(timezone.utc)
+    datetime_string = f"{current_datetime:%Y%m%dT%H%M%SZ}"
+
+    if gpu:
+        gpu_string="#SBATCH --gres=gpu:1\n"
+    else:
+        gpu_string=""
+
+    if aeon:
+        aeon_string="#SBATCH --account=aeon_prep_ac\n"
+    else:
+        aeon_string=""
+
+    cpu_or_gpu = "gpu" if (gpu_queue or gpu) else "cpu"
+
+    print(f"and {cpu_or_gpu=}")
+
+    time_string = format_hours(hours)
+
+    current_dir = Path.cwd()
+    (current_dir / "logs").mkdir(exist_ok=True)
+    (current_dir / "hpc_scripts").mkdir(exist_ok=True)
+
+    script_text = f"""#!/bin/bash \n
+#SBATCH -J {job_name}
+#SBATCH --array={array_range}
+#SBATCH -p {cpu_or_gpu}
+{gpu_string}#SBATCH -N 1
+{aeon_string}#SBATCH --mem {mem}G
+#SBATCH --mail-user {email}
+#SBATCH --mail-type END,FAIL
+#SBATCH -n {cores}
+#SBATCH -t {time_string}
+#SBATCH -o logs/{job_name}_%A_%a.out
+#SBATCH -e logs/{job_name}_%A_%a.err \n
+
+module load uv
+
+source ~/.bashrc
+ulimit -n 4096
+
+cd {current_dir!s}
+uv run {script_path}$SLURM_ARRAY_TASK_ID"""
+
+    script_filename = f"hpc_scripts/{job_name}_{datetime_string}.sh"
+
+    # 'w' mode creates a new file or overwrites an existing file
+    with open(script_filename, "w", encoding="utf-8") as file:
+        file.write(script_text)
+
+    if run:
+        command_to_run = ["sbatch", script_filename]
+        subprocess.run(command_to_run, check=True)
+

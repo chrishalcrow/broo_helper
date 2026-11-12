@@ -1,1 +1,1 @@
-from .scripts import make_and_run_python_script
+from .scripts import make_and_run_python_script, make_and_run_python_scripts
